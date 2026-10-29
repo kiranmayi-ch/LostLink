@@ -47,17 +47,24 @@ export const connectDB = async () => {
         throw err;
       });
     } else {
-      // Specifically configured for in-memory or no URI given
-      console.log('[Database] Initializing MongoDB Memory Server...');
-      const { MongoMemoryServer } = await import('mongodb-memory-server');
-      memoryServerInstance = await MongoMemoryServer.create();
-      const memoryUri = memoryServerInstance.getUri();
-      cached.isMemory = true;
-      cached.promise = mongoose.connect(memoryUri, opts).then((m) => {
-        console.log(`[Database] In-Memory MongoDB running at: ${memoryUri}`);
-        return m;
-      });
-    }
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error(
+      'MONGODB_URI must be configured in production.'
+    );
+  }
+
+  console.log('[Database] Initializing MongoDB Memory Server...');
+
+  const { MongoMemoryServer } = await import('mongodb-memory-server');
+  memoryServerInstance = await MongoMemoryServer.create();
+  const memoryUri = memoryServerInstance.getUri();
+
+  cached.isMemory = true;
+  cached.promise = mongoose.connect(memoryUri, opts).then((m) => {
+    console.log('[Database] In-Memory MongoDB initialized.');
+    return m;
+  });
+}
   }
 
   try {
